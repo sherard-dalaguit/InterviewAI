@@ -45,7 +45,7 @@ export async function getInterviewById(id: string): Promise<Interview | null> {
 }
 
 export async function createFeedback(params: CreateFeedbackParams) {
-  const { interviewId, userId, transcript } = params;
+  const { interviewId, userId, transcript, feedbackId } = params;
 
   try {
     const formattedTranscript = transcript.map((sentence: { role: string, content: string }) => (
@@ -82,10 +82,17 @@ export async function createFeedback(params: CreateFeedbackParams) {
       createdAt: new Date().toISOString()
     }
 
-    const newFeedback = await db.collection('feedback')
-      .add(feedback)
+    let feedbackRef;
 
-    return { success: true, feedbackId: newFeedback.id };
+    if (feedbackId) {
+      feedbackRef = db.collection("feedback").doc(feedbackId);
+    } else {
+      feedbackRef = db.collection("feedback").doc();
+    }
+
+    await feedbackRef.set(feedback);
+
+    return { success: true, feedbackId: feedbackRef.id };
   } catch (e) {
     console.log('Error saving feedback', e)
 
